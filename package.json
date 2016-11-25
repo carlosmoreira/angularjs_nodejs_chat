@@ -1,0 +1,9 @@
+{
+     "name": "angular_chat",
+     "description": "Simple  Node Chat application with Socket.io",
+     "version": "0.0.1",
+     "dependencies": {
+        "express": "",
+        "socket.io": ""
+     }
+}

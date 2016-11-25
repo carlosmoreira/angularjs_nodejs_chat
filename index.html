@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" ng-app="chatApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script src="/bower_components/angular/angular.min.js"></script>
+    <script src="/bower_components/angular-socket-io/socket.min.js"></script>
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <style>
+        @import url("http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css");
+
+        .chat {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat li {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #B3A9A9;
+        }
+
+        .chat li.left .chat-body {
+            margin-left: 60px;
+        }
+
+        .chat li.right .chat-body {
+            margin-right: 60px;
+        }
+
+        .chat li .chat-body p {
+            margin: 0;
+            color: #777777;
+        }
+
+        .panel .slidedown .glyphicon, .chat .glyphicon {
+            margin-right: 5px;
+        }
+
+        .body-panel {
+            overflow-y: scroll;
+            height: 250px;
+        }
+
+        ::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+            background-color: #F5F5F5;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+            background-color: #F5F5F5;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+            background-color: #555;
+        }
+    </style>
+    <script>
+        var app = angular.module('chatApp', ['btford.socket-io']);
+        app.factory('ioSocket', function (socketFactory) {
+            var myIoSocket = io.connect('http://localhost:8080');
+            mySocket = socketFactory({
+                ioSocket: myIoSocket
+            });
+            return mySocket;
+        });
+        app.controller('chatController', function ($scope, ioSocket) {
+            $scope.messages = [];
+
+            //Connect the user
+            ioSocket.on('connect', function () {
+                //Connect the user to specified room
+                ioSocket.emit('room', {
+                    room: "index",
+                    userType: 'client',
+                    user: 'Carlos Moreira'
+                });
+            });
+
+            //listen for chat messages
+            ioSocket.on('updatechat', function (data) {
+                $scope.messages.push(data);
+                var n = $("#chatArea").height() + 100000;
+                $('#chatArea').animate({scrollTop: n}, 50);
+            });
+
+            //Submit chat
+            $scope.submitMessage = function () {
+                if ($scope.chatMessage != null && $scope.chatMessage != "") {
+                    ioSocket.emit('sendchat', {
+                        user: "Carlos Moreira",
+                        text: $scope.chatMessage
+                    });
+                    $scope.chatMessage = null;
+                }
+            };
+        });
+    </script>
+</head>
+<body ng-controller="chatController">
+<div class="container">
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-offset-2 col-md-8 col-lg-8 col-lg-offset-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-comment"></span> Comments
+                </div>
+
+                <div class="panel-body body-panel" id="chatArea">
+                    <ul class="chat" ng-repeat="message in messages">
+                        <li class="left clearfix"><span class="chat-img pull-left">
+                            <img src="http://placehold.it/50/55C1E7/fff&text=U" alt="User Avatar" class="img-circle"/>
+                        </span>
+                            <div class="chat-body clearfix">
+                                <div class="header">
+                                    <strong class="primary-font">{{message.user}}</strong>
+                                </div>
+                                <p>
+                                    {{message.text}}
+                                </p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-footer clearfix">
+                    <textarea class="form-control" rows="3" ng-model="chatMessage"></textarea>
+                    <span class="col-lg-6 col-lg-offset-3 col-md-6 col-md-offset-3 col-xs-12" style="margin-top: 10px">
+                        <button ng-click="submitMessage()" class="btn btn-warning btn-lg btn-block" id="btn-chat">Send
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
